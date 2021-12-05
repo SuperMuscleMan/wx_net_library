@@ -70,7 +70,7 @@ start(Args) ->
 	{stop, Reason :: term()} | ignore).
 init({Src, TabSrc, Socket, HandleM, ProtocolM}) ->
 	{ok, {Ip, Port}} = inet:peername(Socket),
-	{ok, #state{src = Src, tab_src = TabSrc, attr = gb_trees:empty(), ip = Ip,
+	{ok, #state{src = Src, tab_src = TabSrc, attr = init_attr(Socket), ip = Ip,
 		port = Port, socket = Socket, handle_m = HandleM,
 		protocol_m = ProtocolM}, ?Hibernate_TimeOut}.
 
@@ -209,3 +209,8 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
+%% 初始化Attr参数
+init_attr(Socket) ->
+	Tree = gb_trees:empty(),
+	gb_trees:insert(socket, Socket, Tree).
+	
