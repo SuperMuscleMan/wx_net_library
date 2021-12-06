@@ -120,14 +120,6 @@ handle_cast(_Request, State) ->
 	{noreply, NewState :: #state{}} |
 	{noreply, NewState :: #state{}, timeout() | hibernate} |
 	{stop, Reason :: term(), NewState :: #state{}}).
-handle_info(a, #state{socket = Socket} = State) ->
-	?SOUT(catch inet_db:lookup_socket(Socket)),
-	?SOUT(catch inet_tcp:recv(Socket, 1)),
-	?SOUT(catch prim_inet:getstatus(Socket)),
-	?SOUT(catch inet:getstat(Socket)),
-	?SOUT(catch prim_inet:getopts(Socket, [active])),
-	?SOUT(catch gen_tcp:send(Socket, "aaa")),
-	{noreply, State};
 handle_info({tcp, Socket, Bin}, #state{src = Src, tab_src = TabSrc, attr = Attr,
 	handle_m = HandleM, protocol_m = ProtoM, sub_bin = SubBin} = State) ->
 	Bin1 =
@@ -169,12 +161,15 @@ handle_info({tcp, Socket, Bin}, #state{src = Src, tab_src = TabSrc, attr = Attr,
 	end;
 handle_info(timeout, State) ->
 	{noreply, State, hibernate};
+handle_info({tcp_closed, Socket}, #state{handle_m = HandleM, src = Src, tab_src = TabSrc,
+	attr = Attr, socket = Socket} = State) ->
+	HandleM:net_close(Src, TabSrc, Attr, Socket),
+	{stop, normal, State};
 handle_info(_Info, #state{handle_m = HandleM, src = Src, tab_src = TabSrc,
 	attr = Attr, socket = Socket} = State) ->
 	?ERR(_Info),
 	HandleM:net_close(Src, TabSrc, Attr, Socket),
-	{noreply, State, ?Hibernate_TimeOut}.
-
+	{stop, {other_info, _Info}, State}.
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
@@ -189,8 +184,8 @@ handle_info(_Info, #state{handle_m = HandleM, src = Src, tab_src = TabSrc,
 -spec(terminate(Reason :: (normal | shutdown | {shutdown, term()} | term()),
 		State :: #state{}) -> term()).
 terminate(_Reason, _State) ->
-	?ERR(_Reason),
 	ok.
+
 
 %%--------------------------------------------------------------------
 %% @private
