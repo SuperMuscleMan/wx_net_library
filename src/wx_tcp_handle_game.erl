@@ -44,6 +44,8 @@ handle_mf([{M, F} | T], Src, TabSrc, Attr, Term, Socket, ProtoM, IsAlter) ->
 			handle_mf(T, Src, TabSrc, Attr1, Term, Socket, ProtoM, ?ISALTER_Y);
 		noreply ->
 			handle_mf(T, Src,TabSrc,  Attr, Term, Socket, ProtoM, IsAlter);
+		{noreply, Attr1} ->
+			handle_mf(T, Src,TabSrc,  Attr1, Term, Socket, ProtoM, ?ISALTER_Y);
 		{stop, _Reason} = Stop->
 			Stop
 	end;
